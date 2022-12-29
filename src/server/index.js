@@ -23,8 +23,14 @@ const server = fastify({
 });
 server.register(fastifySensible);
 
+let conn;
+
+server.addHook("onReady", async () => {
+    conn = await createConnection()
+});
+
 server.addHook("onRequest", async (req, res) => {
-  const repo = (await createConnection()).getRepository(User);
+  const repo = conn.getRepository(User);
 
   const userId = req.headers["x-app-userid"];
   if (userId !== undefined) {
@@ -38,8 +44,8 @@ server.addHook("onRequest", async (req, res) => {
 });
 
 server.addHook("onRequest", async (req, res) => {
-  res.header("Cache-Control", "no-cache, no-store, no-transform");
-  res.header("Connection", "close");
+    res.header("Cache-Control", "max-age=604800");
+    res.header("Connection", "keep-alive");
 });
 
 server.register(apiRoute, { prefix: "/api" });
